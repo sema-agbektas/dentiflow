@@ -10,7 +10,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://dentiflow-app.vercel.app",
+        "https://dentiflow-app.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
