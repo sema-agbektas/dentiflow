@@ -30,7 +30,7 @@ export default function Appointments() {
     fetchPatients();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate]);
-  
+
   async function handleCreate(e) {
     e.preventDefault();
     
@@ -142,6 +142,7 @@ export default function Appointments() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
+        <span className="text-sm text-slate-500">Filter by date:</span>
         <input
           type="date"
           value={filterDate}
