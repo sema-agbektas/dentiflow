@@ -25,14 +25,20 @@ export default function Appointments() {
     setPatients(res.data);
   }
 
-  useEffect(() => {
+ useEffect(() => {
     fetchAppointments();
     fetchPatients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate]);
-
+  
   async function handleCreate(e) {
     e.preventDefault();
-    setLoading(true);
+    
+    const today = new Date().toISOString().split("T")[0];
+    if (form.date < today) {
+      alert("Cannot create appointment in the past!");
+      return;
+    }
     try {
       await createAppointment({
         ...form,
