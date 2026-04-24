@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from datetime import date, datetime, timedelta
+from sqlalchemy import func, cast, Date
+from datetime import date
 from app.database import get_db
 from app.models.models import Treatment, Appointment, Patient, Doctor
 from app.routers.auth import get_current_user
@@ -13,26 +13,22 @@ def get_summary(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    today = str((datetime.utcnow() + timedelta(hours=3)).date())
+    today = date.today()
 
-    # Daily revenue
-    # Daily revenue
-    daily_revenue = db.query(func.sum(Treatment.cost)).scalar() or 0
+    daily_revenue = db.query(func.sum(Treatment.cost)).filter(
+        cast(Treatment.created_at, Date) == today
+    ).scalar() or 0
 
-    # Today's appointments
     today_appointments = db.query(Appointment).filter(
-        Appointment.date == today
+        Appointment.date == str(today)
     ).count()
 
-    # Total patients
     total_patients = db.query(Patient).count()
 
-    # Completed treatments today
     completed_treatments = db.query(Treatment).filter(
-        func.cast('%Y-%m-%d', Treatment.created_at) == today
+        cast(Treatment.created_at, Date) == today
     ).count()
 
-    # Doctor revenue
     doctors = db.query(Doctor).all()
     doctor_revenue = []
     for doctor in doctors:
@@ -46,14 +42,13 @@ def get_summary(
             "revenue": revenue
         })
 
-    # Weekly revenue
     weekly_revenue = db.query(
-        func.cast('%Y-%m-%d', Treatment.created_at).label("date"),
+        cast(Treatment.created_at, Date).label("date"),
         func.sum(Treatment.cost).label("total")
     ).group_by(
-        func.cast('%Y-%m-%d', Treatment.created_at)
+        cast(Treatment.created_at, Date)
     ).order_by(
-        func.cast('%Y-%m-%d', Treatment.created_at)
+        cast(Treatment.created_at, Date)
     ).limit(7).all()
 
     return {
