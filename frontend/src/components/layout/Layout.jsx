@@ -2,42 +2,42 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 
 export default function Layout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
+    <div className="min-h-screen bg-slate-100">
+      {/* Overlay */}
+      {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed z-30 lg:static lg:block ${sidebarOpen ? "block" : "hidden"} lg:block`}>
-        <Sidebar />
-      </div>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <div className=" flex items-center gap-3 bg-slate-900 px-4 py-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-white text-xl"
-          >
-            ☰
-          </button>
-          <span className="text-white font-bold">
-            Denti<span className="text-teal-400">flow</span>
-          </span>
+      {isOpen && (
+        <div className="fixed z-30 top-0 left-0">
+          <Sidebar />
         </div>
+      )}
 
-        <main className="flex-1 p-4 lg:p-7">
-          {children}
-        </main>
+      {/* Header */}
+      <div className="flex items-center gap-3 bg-slate-900 px-4 py-3 sticky top-0 z-10">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="text-white text-xl font-bold px-2"
+        >
+          ☰
+        </button>
+        <span className="text-white font-bold text-lg">
+          Denti<span className="text-teal-400">flow</span>
+        </span>
       </div>
+
+      {/* Content */}
+      <main className="p-4 lg:p-7">
+        {children}
+      </main>
     </div>
   );
 }
