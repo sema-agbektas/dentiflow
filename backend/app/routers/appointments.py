@@ -38,7 +38,7 @@ def get_appointments(
     if date:
         query = query.filter(Appointment.date == date)
     appointments = query.order_by(Appointment.date, Appointment.time).all()
-    
+
     result = []
     for a in appointments:
         patient = db.query(Patient).filter(Patient.id == a.patient_id).first()
@@ -81,6 +81,10 @@ def update_status(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
+    valid_statuses = ["pending", "completed", "cancelled", "missed"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+
     appt = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")

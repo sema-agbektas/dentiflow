@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
-import { getTreatments, createTreatment, deleteTreatment, getPatients } from "../api/index";
-
+import { getTreatments, createTreatment, deleteTreatment, getPatients, getAppointments } from "../api/index";
 export default function Treatments() {
   const [treatments, setTreatments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ patient_id: "", doctor_id: "", treatment_name: "", cost: "", notes: "" });
+  const [autoDoctor, setAutoDoctor] = useState("")
   const [loading, setLoading] = useState(false);
-
-  const doctors = [
-    { id: 1, name: "Dr. Mehmet Eren" },
-    { id: 2, name: "Dr. Zeynep Arslan" },
-    { id: 3, name: "Dr. Can Yılmaz" },
-  ];
 
   async function fetchTreatments() {
     const res = await getTreatments();
@@ -28,6 +22,28 @@ export default function Treatments() {
     fetchTreatments();
     fetchPatients();
   }, []);
+  // Hasta seçilince o hastanın son randevusundaki doktoru bul
+    async function handlePatientChange(patientId) {
+      setForm({ ...form, patient_id: patientId, doctor_id: "" });
+      setAutoDoctor("");
+      if (!patientId) return;
+  
+      try {
+        const res = await getAppointments();
+        const patientAppointments = res.data
+          .filter((a) => String(a.patient_id) === String(patientId))
+          .sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
+  
+        if (patientAppointments.length > 0) {
+          const lastAppt = patientAppointments[0];
+          setForm((prev) => ({ ...prev, patient_id: patientId, doctor_id: lastAppt.doctor_id }));
+          setAutoDoctor(lastAppt.doctor_name || `Doctor #${lastAppt.doctor_id}`);
+        }
+      } catch {
+            void 0;
+          }
+    }
+  
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -40,6 +56,7 @@ export default function Treatments() {
         cost: Number(form.cost),
       });
       setForm({ patient_id: "", doctor_id: "", treatment_name: "", cost: "", notes: "" });
+      setAutoDoctor("");
       setShowForm(false);
       fetchTreatments();
     } catch {
@@ -78,7 +95,7 @@ export default function Treatments() {
           <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
             <select
               value={form.patient_id}
-              onChange={(e) => setForm({ ...form, patient_id: e.target.value })}
+              onChange={(e) => handlePatientChange(e.target.value)}
               className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-400"
               required
             >
@@ -87,17 +104,13 @@ export default function Treatments() {
                 <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
               ))}
             </select>
-            <select
-              value={form.doctor_id}
-              onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-400"
-              required
-            >
-              <option value="">Select Doctor</option>
-              {doctors.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
+            {/* Doktor otomatik geliyor */}
+            <div className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-slate-50 text-slate-600 flex items-center">
+              {autoDoctor
+                ? <span>👨‍⚕️ {autoDoctor} <span className="text-xs text-teal-500">(from appointment)</span></span>
+                : <span className="text-slate-400">Doctor auto-filled from appointment</span>
+              }
+            </div>
             <input
               placeholder="Treatment Name (e.g. Root Canal)"
               value={form.treatment_name}

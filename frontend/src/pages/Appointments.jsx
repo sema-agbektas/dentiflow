@@ -12,12 +12,32 @@ export default function Appointments() {
   const doctors = [
     { id: 1, name: "Dr. Mehmet Eren" },
     { id: 2, name: "Dr. Zeynep Arslan" },
-    { id: 3, name: "Dr. Can Yılmaz" },
+    { id: 3, name: "Dr. Can Yilmaz" },
   ];
 
   async function fetchAppointments() {
     const res = await getAppointments(filterDate);
-    setAppointments(res.data);
+    const data = res.data;
+
+    // Auto-mark as missed if 1 hour has passed since appointment time
+    const now = new Date();
+    for (const a of data) {
+      if (a.status === "pending") {
+        const apptDateTime = new Date(`${a.date}T${a.time}`);
+        const diffMs = now - apptDateTime;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        if (diffHours >= 1) {
+          try {
+            await updateAppointmentStatus(a.id, "missed");
+            a.status = "missed";
+          } catch {
+            void 0;
+          }
+        }
+      }
+    }
+
+    setAppointments(data);
   }
 
   async function fetchPatients() {
@@ -25,20 +45,20 @@ export default function Appointments() {
     setPatients(res.data);
   }
 
- useEffect(() => {
+  useEffect(() => {
     fetchAppointments();
     fetchPatients();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate]);
 
   async function handleCreate(e) {
     e.preventDefault();
-    
     const today = new Date().toISOString().split("T")[0];
     if (form.date < today) {
       alert("Cannot create appointment in the past!");
       return;
     }
+    setLoading(true);
     try {
       await createAppointment({
         ...form,
@@ -70,6 +90,7 @@ export default function Appointments() {
     pending: "bg-yellow-100 text-yellow-700",
     completed: "bg-green-100 text-green-700",
     cancelled: "bg-red-100 text-red-600",
+    missed: "bg-gray-100 text-gray-500",
   };
 
   return (
@@ -179,11 +200,12 @@ export default function Appointments() {
                 <select
                   value={a.status}
                   onChange={(e) => handleStatus(a.id, e.target.value)}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-0 focus:outline-none ${statusColor[a.status]}`}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-0 focus:outline-none ${statusColor[a.status] || "bg-gray-100 text-gray-500"}`}
                 >
                   <option value="pending">Pending</option>
                   <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="missed">Missed</option>
                 </select>
                 <button
                   onClick={() => handleDelete(a.id)}
@@ -199,3 +221,4 @@ export default function Appointments() {
     </div>
   );
 }
+
