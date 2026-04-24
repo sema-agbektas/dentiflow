@@ -29,7 +29,7 @@ def get_summary(
 
     # Completed treatments today
     completed_treatments = db.query(Treatment).filter(
-        func.strftime('%Y-%m-%d', Treatment.created_at) == today
+        func.cast('%Y-%m-%d', Treatment.created_at) == today
     ).count()
 
     # Doctor revenue
@@ -48,12 +48,12 @@ def get_summary(
 
     # Weekly revenue
     weekly_revenue = db.query(
-        func.strftime('%Y-%m-%d', Treatment.created_at).label("date"),
+        func.cast('%Y-%m-%d', Treatment.created_at).label("date"),
         func.sum(Treatment.cost).label("total")
     ).group_by(
-        func.strftime('%Y-%m-%d', Treatment.created_at)
+        func.cast('%Y-%m-%d', Treatment.created_at)
     ).order_by(
-        func.strftime('%Y-%m-%d', Treatment.created_at)
+        func.cast('%Y-%m-%d', Treatment.created_at)
     ).limit(7).all()
 
     return {
