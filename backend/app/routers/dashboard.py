@@ -29,26 +29,35 @@ def get_summary(
         cast(Treatment.created_at, Date) == today
     ).count()
 
-    doctors = db.query(Doctor).all()
+    #doctors = db.query(Doctor).all()
+    #doctor_revenue = []
+    #for doctor in doctors:
+    #    revenue = db.query(func.sum(Treatment.cost)).filter(
+    #        Treatment.doctor_id == doctor.id
+    #    ).scalar() or 0
+    doctor_revenue_query = db.query(
+    Doctor,
+    func.sum(Treatment.cost).label("revenue")
+).join(Treatment, Treatment.doctor_id == Doctor.id, isouter=True)\
+ .group_by(Doctor.id)\
+ .all()
     doctor_revenue = []
-    for doctor in doctors:
-        revenue = db.query(func.sum(Treatment.cost)).filter(
-            Treatment.doctor_id == doctor.id
-        ).scalar() or 0
-        doctor_revenue.append({
-            "doctor_id": doctor.id,
-            "doctor_name": f"Dr. {doctor.first_name} {doctor.last_name}",
-            "specialization": doctor.specialization,
-            "revenue": revenue
-        })
+    for doctor, revenue in doctor_revenue_query:
+       doctor_revenue.append({
+        "doctor_id": doctor.id,
+        "doctor_name": f"Dr. {doctor.first_name} {doctor.last_name}",
+        "specialization": doctor.specialization,
+        "revenue": revenue or 0
+    })
+    
 
     weekly_revenue = db.query(
-        cast(Treatment.created_at, Date).label("date"),
-        func.sum(Treatment.cost).label("total")
+    func.date(Treatment.created_at).label("date"),
+    func.sum(Treatment.cost).label("total")
     ).group_by(
-        cast(Treatment.created_at, Date)
+    func.date(Treatment.created_at)
     ).order_by(
-        cast(Treatment.created_at, Date)
+    func.date(Treatment.created_at)
     ).limit(7).all()
 
     return {

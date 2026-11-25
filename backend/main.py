@@ -1,3 +1,11 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S"
+)
+
+logger = logging.getLogger("dentiflow")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
@@ -26,8 +34,11 @@ app.include_router(doctors.router)
 
 @app.get("/")
 def root():
-    return {"message": "Dentiflow API is running v2"}
+    logger.info("🦷 Dentiflow API'ye istek geldi")
+    return{"message": "Dentiflow API is running v2"}
 
 @app.get("/health")
 def health():
+    logger.info("✅ Sistem sağlıklı çalışıyor")
     return {"status": "ok"}
+

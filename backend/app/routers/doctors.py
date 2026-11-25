@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.models.models import Doctor
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user,require_admin
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
@@ -33,7 +33,7 @@ def get_doctors(
 def create_doctor(
     doctor: DoctorCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_admin)
 ):
     new_doctor = Doctor(**doctor.dict())
     db.add(new_doctor)

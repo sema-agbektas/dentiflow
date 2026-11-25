@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.models import Treatment, Patient, Doctor
 from app.routers.auth import get_current_user
-
+from sqlalchemy.orm import joinedload
 router = APIRouter(prefix="/treatments", tags=["treatments"])
 
 class TreatmentCreate(BaseModel):
@@ -33,11 +33,14 @@ def get_treatments(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    treatments = db.query(Treatment).order_by(Treatment.created_at.desc()).all()
+    treatments = db.query(Treatment).options(
+    joinedload(Treatment.patient),
+    joinedload(Treatment.doctor)
+).order_by(Treatment.created_at.desc()).all()
     result = []
     for t in treatments:
-        patient = db.query(Patient).filter(Patient.id == t.patient_id).first()
-        doctor = db.query(Doctor).filter(Doctor.id == t.doctor_id).first()
+        patient = t.patient
+        doctor = t.doctor
         result.append(TreatmentResponse(
             id=t.id,
             patient_id=t.patient_id,

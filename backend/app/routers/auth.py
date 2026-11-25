@@ -70,3 +70,19 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_token({"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+
+def require_admin(current_user= Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403,detail="Admin privileges required")
+
+def require_doctor (current_user=Depends(get_current_user)):
+    if current_user.role != "doctor":
+        raise HTTPException(status_code=403,detail="Doctor")
+    
+def require_apoitmen(current_user=Depends(get_current_user)):
+    if current_user.role != "apoitment":
+        raise HTTPException(status_code=403,detail=apoitment)
+    
+def require_tratents(current_user=Depends(get_current_user))
+    if current_user.role != "tretaments":
+        raise
